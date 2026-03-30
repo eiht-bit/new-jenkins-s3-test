@@ -27,16 +27,36 @@ pipeline {
             }
         }
 
+        stage('Terraform Format') {
+            steps {
+                sh 'terraform fmt -check'
+            }
+        }
+
+        stage('Terraform Validate') {
+            steps {
+                sh 'terraform validate'
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'jenkinsTest'
+                ]]) {
+                    sh 'terraform plan -out=tfplan'
+                }
+            }
+        }
+
         stage('Terraform Apply') {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: 'jenkinsTest'
                 ]]) {
-                    sh '''
-                        terraform plan -out=tfplan
-                        terraform apply -auto-approve tfplan
-                    '''
+                    sh 'terraform apply -auto-approve tfplan'
                 }
             }
         }
